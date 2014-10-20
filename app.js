@@ -24,9 +24,10 @@
 
 
 /*jslint vars: true, plusplus: true, devel: true, nomen: true, indent: 4, maxerr: 50, browser: true */
-/*global $, define, brackets, WebSocket, ArrayBuffer, Uint32Array */
+/*global */
 
 function BubbleBuster(numOfRows, numOfCols, parentElement) {
+    "use strict";
     this.numOfRows = numOfRows;
     this.numOfCols = numOfCols;
     this.parent = parentElement;
@@ -35,6 +36,7 @@ function BubbleBuster(numOfRows, numOfCols, parentElement) {
 }
 
 BubbleBuster.prototype.generate = function () {
+    "use strict";
     this.parent.innerHTML = "";
     this.table = document.createElement('table');
     this.table.setAttribute('id', 'quiz-table');
@@ -57,14 +59,17 @@ BubbleBuster.prototype.generate = function () {
 };
 
 BubbleBuster.prototype.reGenerate = function () {
+    "use strict";
     this.generate();
 };
 
 BubbleBuster.prototype.generateRandomColors = function () {
+    "use strict";
     return "#" + ((1 << 24) * Math.random() | 0).toString(16);
 };
 
 BubbleBuster.prototype.generateBubbles = function (startRow, startCol, endRow, endCol) {
+    "use strict";
     var row,
         col,
         bubble;
