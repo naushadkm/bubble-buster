@@ -20,3 +20,819 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+
+<!--
+<a href ng-click="removeGrid()">Remove Grid</a> | 
+<a href ng-click="altersomedata()">Alter Some Data From Grid 1</a> | 
+<a href ng-click="dumpGridData()">Dump Grid Data to Console</a> | 
+<a href ng-click="dumpGridMetaData()">Dump Grid Data Cells Meta data to Console</a> | -->
+<a href ng-click="getint()">Get Current Datasheet Instance</a>
+<br/>
+<br/>
+<br/>
+<form name="buildForecastForm">
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="ds-spinner" style="display:none;">
+                Preparing... <i class="fa fa-spinner fa-spin"></i>
+            </div>
+            <div class="main-grid">
+                <ul class="nav nav-tabs nav-tabs-dept">
+                    dept
+                    
+                </ul>
+                <div class="tab-content tab-content-dept">
+                    
+                </div>
+
+                <ul class="nav nav-tabs nav-tabs-class" style="display:none;">
+                    class
+                </ul>
+                <div class="tab-content tab-content-class" style="display:none;">
+                    
+                </div>
+
+                <ul class="nav nav-tabs nav-tabs-subclass" style="display:none;">
+                    subclass
+                </ul>
+                <div class="tab-content tab-content-subclass" style="display:none;">
+                    
+                </div>
+
+                <ul class="nav nav-tabs nav-tabs-style" style="display:none;">
+                    style
+                </ul>
+                <div class="tab-content tab-content-style" style="display:none;">
+                    
+                </div>
+
+
+                <ul class="nav nav-tabs nav-tabs-item" style="display:none;">
+                    item
+                </ul>
+                <div class="tab-content tab-content-item" style="display:none;">
+                    
+                </div>
+            </div>
+            
+            <!-- nav pills for hierarchical selection -->
+            <ul class="nav nav-pills nav-stacked">
+              <li ng-click="showDatasheet('dept')"><a href>Dept</a></li>
+              <li ng-click="showDatasheet('class')"><a href>Class</a></li>
+              <li ng-click="showDatasheet('subclass')"><a href>SubClass</a></li>
+              <li ng-click="showDatasheet('style')"><a href>Style</a></li>
+              <li ng-click="showDatasheet('item')"><a href>Items</a></li>
+            </ul>
+
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xs-10 col-md-offset-1">
+            <br/>
+            <br/>
+            <br/>
+        </div>
+    </div>
+    
+</form>
+
+app.controller('dsCtrl', ['$scope', '$q', 'UserDetails', function($scope, $q, UserDetails) {
+    $scope.message = 'Welcome to Test page!';
+
+    $scope.getint = function() {
+        debugger;
+    };
+    $scope.showDatasheet = function(level) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+
+        var tabs = document.querySelectorAll('.nav-tabs'),
+            tabpanes = document.querySelectorAll('.tab-content'),
+            curr_tab = document.querySelectorAll('.nav-tabs-'+ level)[0],
+            curr_tabpane = document.querySelectorAll('.tab-content-'+ level)[0];
+
+        /* de-activate all the tabs */
+        for (var i = 0, len = tabs.length; i < len; i++) {
+            tabs[i].style.display = 'none';
+            tabpanes[i].style.display = 'none';
+        }
+
+        //this.classList.add('active');
+
+        curr_tab.style.display = "block";
+        curr_tabpane.style.display = "block";
+    };
+
+    var UPS_GRID_CONSTANTS = {
+            EDIT: 'edit',
+            NONEDIT: 'non-edit',
+            TOTAL: 'total',
+            RED: 'red',
+            YELLOW: 'yellow',
+            WHITE: 'white',
+            LIGHTGREY: 'lightGrey',
+            DARKGREY: 'darkGrey',
+            PINK: 'pink'
+        },
+        VERSIONS = null,
+        VARIABLES = null,
+        lastVersionsButton = null,
+        lastVariablesButton = null,
+        TABS = [],
+        DATASHEET_RESPONSE_DATA = {
+            "dept": {},
+            "class": {},
+            "subclass": {},
+            "style": {},
+            "item": {}
+        },
+
+        generateData = function() {
+            var versions = [{"verC":"1","verDescT":"Plan"},{"verC":"2","verDescT":"Forecast"},{"verC":"3","verDescT":"What If"},{"verC":"4","verDescT":"Last Week"},{"verC":"5","verDescT":"Last Year"},{"verC":"6","verDescT":"Approved Forecast"},{"verC":"7","verDescT":"Reference History"},{"verC":"8","verDescT":"Prior Forecast"}],
+                variables = [{"upsVarI":"A_1_MKDN_RETL_A","upsVarDescT":"1st A MD $"},{"upsVarI":"A_1_NEW_ARETL_A","upsVarDescT":"1st A MD New Avg Rtl"},{"upsVarI":"A_1_NEW_ARETL_A","upsVarDescT":"1st A MD New Avg Rtl"},{"upsVarI":"A_1_OLD_ARETL_A","upsVarDescT":"1st A MD Old Avg Rtl"},{"upsVarI":"A_1_OVRD_UNIT_Q","upsVarDescT":"1st A MD Override U"},{"upsVarI":"A_1_MKDN_UNIT_Q","upsVarDescT":"1st A MD U"},{"upsVarI":"A_2_MKDN_RETL_A","upsVarDescT":"2nd A MD $"},{"upsVarI":"A_2_NEW_ARETL_A","upsVarDescT":"2nd A MD New Avg Rtl"},{"upsVarI":"A_2_OLD_ARETL_A","upsVarDescT":"2nd A MD Old Avg Rtl"},{"upsVarI":"A_2_OVRD_UNIT_Q","upsVarDescT":"2nd A MD Override U"},{"upsVarI":"A_2_MKDN_UNIT_Q","upsVarDescT":"2nd A MD U"},{"upsVarI":"A_3_MKDN_RETL_A","upsVarDescT":"3rd A MD $"},{"upsVarI":"A_3_NEW_ARETL_A","upsVarDescT":"3rd A MD New Avg Rtl"},{"upsVarI":"A_3_OLD_ARETL_A","upsVarDescT":"3rd A MD Old Avg Rtl"},{"upsVarI":"A_3_OVRD_UNIT_Q","upsVarDescT":"3rd A MD Override U"},{"upsVarI":"A_3_MKDN_UNIT_Q","upsVarDescT":"3rd A MD U"},{"upsVarI":"A_MD_TO_SLS_RETL_P","upsVarDescT":"A MD % to Tot Sls $"},{"upsVarI":"AVG_INV_RETL_A","upsVarDescT":"Avg Inv $"},{"upsVarI":"AVG_INV_UNIT_Q","upsVarDescT":"Avg Inv U"},{"upsVarI":"B_MKDN_RETL_A","upsVarDescT":"B MD $"},{"upsVarI":"B_MD_TO_SLS_RETL_P","upsVarDescT":"B MD % to Tot Sls $"},{"upsVarI":"B_MKDN_NEW_ARETL_A","upsVarDescT":"B MD New Avg Rtl"},{"upsVarI":"B_MKDN_OLD_ARETL_A","upsVarDescT":"B MD Old Avg Rtl"},{"upsVarI":"B_MKDN_UNIT_Q","upsVarDescT":"B MD U"},{"upsVarI":"BASE_INV_RETL_A","upsVarDescT":"Base Inv $"},{"upsVarI":"BASE_INV_UNIT_Q","upsVarDescT":"Base Inv U"},{"upsVarI":"C_MKDN_RETL_A","upsVarDescT":"C MD $"},{"upsVarI":"C_MD_TO_SLS_RETL_P","upsVarDescT":"C MD % to Tot Sls $"},{"upsVarI":"C_MKDN_NEW_ARETL_A","upsVarDescT":"C MD New Avg Rtl"},{"upsVarI":"C_MKDN_OLD_ARETL_A","upsVarDescT":"C MD Old Avg Rtl"},{"upsVarI":"C_MKDN_UNIT_Q","upsVarDescT":"C MD U"},{"upsVarI":"CMU_P","upsVarDescT":"CMU%"},{"upsVarI":"RDC_CLR_BOH_RETL_A","upsVarDescT":"Clr BOH $"},{"upsVarI":"CLR_BOH_ARETL_A","upsVarDescT":"Clr BOH Avg Rtl"},{"upsVarI":"RDC_CLR_BOH_UNIT_Q","upsVarDescT":"Clr BOH U"},{"upsVarI":"RDC_CLR_EOH_RETL_A","upsVarDescT":"Clr EOH $"},{"upsVarI":"CLR_EOH_ARETL_A","upsVarDescT":"Clr EOH Avg Rtl"},{"upsVarI":"RDC_CLR_EOH_UNIT_Q","upsVarDescT":"Clr EOH U"},{"upsVarI":"CLR_PROJWOS_RETL_A","upsVarDescT":"Clr Proj WOS $"},{"upsVarI":"CLR_PROJWOS_UNIT_Q","upsVarDescT":"Clr Proj WOS U"},{"upsVarI":"CLR_RATESALE_RET_P","upsVarDescT":"Clr Rate of Sale % $"},{"upsVarI":"CLR_RATESALE_UNT_P","upsVarDescT":"Clr Rate of Sale % U"},{"upsVarI":"CLR_RCPT_RETL_A","upsVarDescT":"Clr Rcpts $"},{"upsVarI":"CLR_AVG_COST_A","upsVarDescT":"Clr Rcpts Avg Cost"},{"upsVarI":"CLR_RCPT_ARETL_A","upsVarDescT":"Clr Rcpts Avg Rtl"},{"upsVarI":"CLR_RCPT_COST_A","upsVarDescT":"Clr Rcpts Tot Cost $"},{"upsVarI":"CLR_RCPT_UNIT_Q","upsVarDescT":"Clr Rcpts U"},{"upsVarI":"CLR_SLS_RETL_A","upsVarDescT":"Clr Sls $"},{"upsVarI":"CLR_SLS_RETL_A","upsVarDescT":"Clr Sls $"},{"upsVarI":"CLR_SLS_TO_SLS_P","upsVarDescT":"Clr Sls % to Tot Sls"}];
+
+            VERSIONS = versions;
+            VARIABLES = variables;
+
+            var levels = Object.keys(DATASHEET_RESPONSE_DATA);
+            levels.forEach(function(keey, indx){
+
+                for(var g = 0; g < 10; g++) {
+                    DATASHEET_RESPONSE_DATA[keey]["Grid "+ g] = {};
+                    DATASHEET_RESPONSE_DATA[keey]["Grid "+ g].data = [];
+
+                    for(var r = 0; r < 80; r++) {
+                        var row = [];
+
+                        for(var v = 0; v < variables.length; v++) {
+                            var num = Math.ceil((Math.random() * Math.random() * 100 + 124) * 100) / 100,
+                                mod = v % 5,
+                                t = 'edit';
+                            if (mod == 0) {
+                                t = "non-edit";
+                            }
+
+                            row.push({
+                                val: num + "",
+                                type: t,
+                                versions: {
+                                    verC: versions[0].verC,
+                                    verDescT: versions[0].verDescT
+                                },
+                                "variables": {
+                                    upsVarI: variables[v].upsVarI,
+                                    upsVarDescT: variables[v].upsVarDescT
+                                }
+                            });
+                        }
+                        DATASHEET_RESPONSE_DATA[keey]["Grid "+ g].data.push(row);
+                    }
+                }
+            });
+            return DATASHEET_RESPONSE_DATA;
+        },
+        totalColRenderer = function(instance, td, row, col, prop, value, cellProperties) {
+            
+            td.classList.add(UPS_GRID_CONSTANTS.DARKGREY);
+            
+            if (value < 0) {
+                td.classList.add(UPS_GRID_CONSTANTS.RED);
+            }
+
+            Handsontable.renderers.TextRenderer.apply(this, arguments);
+        },
+        editableColRenderer = function(instance, td, row, col, prop, value, cellProperties) {
+            
+            /*console.log("cellProperties::: ", cellProperties.isDirty);*/
+            /* Checking this cell has been Edited */
+            if (cellProperties.isDirty) {
+                td.classList.add(UPS_GRID_CONSTANTS.YELLOW);
+                
+                if (value < 0) {
+                    td.classList.add(UPS_GRID_CONSTANTS.RED);
+                }
+            }
+
+            Handsontable.renderers.TextRenderer.apply(this, arguments);
+        },
+        nonEditableColRenderer = function(instance, td, row, col, prop, value, cellProperties) {
+            
+            td.classList.add(UPS_GRID_CONSTANTS.LIGHTGREY);
+            
+            if (value < 0) {
+                td.classList.add(UPS_GRID_CONSTANTS.RED);
+            }
+
+            /*td.innerText = value;*/
+            Handsontable.renderers.TextRenderer.apply(this, arguments);
+        },
+        getCustomCellProperties = function(cellProperties, colDataObj) {
+
+            if (colDataObj.type == "non-edit") {
+                cellProperties.renderer = nonEditableColRenderer;
+            } else if (colDataObj.type == "total") {
+                cellProperties.renderer = totalColRenderer;
+            } else {
+                cellProperties.readOnly = false;
+                cellProperties.renderer = editableColRenderer;
+            }
+
+            return cellProperties;
+        },
+        buildMenuVersions = function (versionValue, versionDesc) {
+            var menu = document.createElement('UL'),
+                types = [],
+                item;
+
+            for (var i = 0; i < VERSIONS.length; i++) {
+                types.push({ verC: VERSIONS[i].verC, verDescT: VERSIONS[i].verDescT });
+            }
+
+            menu.className = 'changeTypeMenuVersions';
+
+            for (var i = 0, len = types.length; i< len; i++) {
+                item = document.createElement('LI');
+                if('innerText' in item) {
+                    item.innerText = types[i].verDescT;
+                } else {
+                    item.textContent = types[i].verDescT;
+                }
+
+                item.setAttribute("data-verc", types[i].verC);
+
+                if (versionDesc == types[i].verDescT) {
+                    item.className = 'active';
+                }
+                menu.appendChild(item);
+            }
+
+            return menu;
+        },
+        buildMenuVariables = function (variableValue, variableDesc) {
+            var menu = document.createElement('UL'),
+                types = [],
+                item;
+
+            for (var i = 0; i < VARIABLES.length; i++) {
+                types.push({ upsVarI: VARIABLES[i].upsVarI, upsVarDescT: VARIABLES[i].upsVarDescT });
+            }
+
+            menu.className = 'changeTypeMenuVariables';
+
+            for (var i = 0, len = types.length; i< len; i++) {
+                item = document.createElement('LI');
+                if('innerText' in item) {
+                    item.innerText = types[i].upsVarDescT;
+                } else {
+                    item.textContent = types[i].upsVarDescT;
+                }
+
+                item.setAttribute("data-upsvari", types[i].upsVarI);
+
+                if (variableDesc == types[i].upsVarDescT) {
+                    item.className = 'active';
+                }
+                menu.appendChild(item);
+            }
+
+            return menu;
+        },
+        buildButtonVersions = function(btnText) {
+            var button = document.createElement('BUTTON');
+
+            button.innerHTML = '\u25BC '+ btnText;
+            button.title = btnText;
+            button.className = 'changeTypeVersions';
+
+            return button;
+        },
+        buildButtonVariables = function(btnText) {
+            var button = document.createElement('BUTTON');
+
+            button.innerHTML = '\u25BC '+ btnText;
+            button.title = btnText;
+            button.className = 'changeTypeVariables';
+
+            return button;
+        },
+        addVersionsButtonMenuEvent = function (button, menu) {
+            Handsontable.Dom.addEvent(button, 'click', function (event) {
+                var changeTypeMenuVersions, position, removeMenu;
+                
+                lastVersionsButton = this;
+                document.body.appendChild(menu);
+
+                event.preventDefault();
+                event.stopImmediatePropagation();
+
+                changeTypeMenuVersions = document.querySelectorAll('.changeTypeMenuVersions');
+
+                for (var i = 0, len = changeTypeMenuVersions.length; i < len; i++) {
+                    changeTypeMenuVersions[i].style.display = 'none';
+                }
+                menu.style.display = 'block';
+                position = button.getBoundingClientRect();
+
+                menu.style.top = (position.top + (window.scrollY || window.pageYOffset)) + 2 + 'px';
+                menu.style.left = (position.left) + 'px';
+
+                removeMenu = function (event) {
+                    if (event.target.nodeName == 'LI' && event.target.parentNode.className.indexOf('changeTypeMenuVersions') !== -1 || event.target.parentNode.className.indexOf('changeTypeMenuVersions') == -1) {
+                        if (menu.parentNode) {
+                            menu.parentNode.removeChild(menu);
+                        }
+                    }
+                };
+              Handsontable.Dom.removeEvent(document, 'click', removeMenu);
+              Handsontable.Dom.addEvent(document, 'click', removeMenu);
+            });
+        },
+        addVariablesButtonMenuEvent = function (button, menu) {
+            Handsontable.Dom.addEvent(button, 'click', function (event) {
+                var changeTypeMenuVariables, position, removeMenu;
+                
+                lastVariablesButton = this;
+                document.body.appendChild(menu);
+
+                event.preventDefault();
+                event.stopImmediatePropagation();
+
+                changeTypeMenuVariables = document.querySelectorAll('.changeTypeMenuVariables');
+
+                for (var i = 0, len = changeTypeMenuVariables.length; i < len; i++) {
+                    changeTypeMenuVariables[i].style.display = 'none';
+                }
+                menu.style.display = 'block';
+                position = button.getBoundingClientRect();
+
+                menu.style.top = (position.top + (window.scrollY || window.pageYOffset)) + 2 + 'px';
+                menu.style.left = (position.left) + 'px';
+
+                removeMenu = function (event) {
+                    if (event.target.nodeName == 'LI' && event.target.parentNode.className.indexOf('changeTypeMenuVariables') !== -1 || event.target.parentNode.className.indexOf('changeTypeMenuVariables') == -1) {
+                        if (menu.parentNode) {
+                            menu.parentNode.removeChild(menu);
+                        }
+                    }
+                };
+              Handsontable.Dom.removeEvent(document, 'click', removeMenu);
+              Handsontable.Dom.addEvent(document, 'click', removeMenu);
+            });
+        },
+        createADataSheetInstance = function (dsParentElement, dsData) {
+            
+            var buildMenuVersions = function (versionValue, versionDesc) {
+                    var menu = document.createElement('UL'),
+                        types = [],
+                        item;
+
+                    for (var i = 0; i < VERSIONS.length; i++) {
+                        types.push({ verC: VERSIONS[i].verC, verDescT: VERSIONS[i].verDescT });
+                    }
+
+                    menu.className = 'changeTypeMenuVersions';
+
+                    for (var i = 0, len = types.length; i< len; i++) {
+                        item = document.createElement('LI');
+                        if('innerText' in item) {
+                            item.innerText = types[i].verDescT;
+                        } else {
+                            item.textContent = types[i].verDescT;
+                        }
+
+                        item.setAttribute("data-verc", types[i].verC);
+
+                        if (versionDesc == types[i].verDescT) {
+                            item.className = 'active';
+                        }
+                        menu.appendChild(item);
+                    }
+
+                    return menu;
+                },
+                buildMenuVariables = function (variableValue, variableDesc) {
+                    var menu = document.createElement('UL'),
+                        types = [],
+                        item;
+
+                    for (var i = 0; i < VARIABLES.length; i++) {
+                        types.push({ upsVarI: VARIABLES[i].upsVarI, upsVarDescT: VARIABLES[i].upsVarDescT });
+                    }
+
+                    menu.className = 'changeTypeMenuVariables';
+
+                    for (var i = 0, len = types.length; i< len; i++) {
+                        item = document.createElement('LI');
+                        if('innerText' in item) {
+                            item.innerText = types[i].upsVarDescT;
+                        } else {
+                            item.textContent = types[i].upsVarDescT;
+                        }
+
+                        item.setAttribute("data-upsvari", types[i].upsVarI);
+
+                        if (variableDesc == types[i].upsVarDescT) {
+                            item.className = 'active';
+                        }
+                        menu.appendChild(item);
+                    }
+
+                    return menu;
+                },
+                buildButtonVersions = function(btnText) {
+                    var button = document.createElement('BUTTON');
+
+                    button.innerHTML = '\u25BC '+ btnText;
+                    button.title = btnText;
+                    button.className = 'changeTypeVersions';
+
+                    return button;
+                },
+                buildButtonVariables = function(btnText) {
+                    var button = document.createElement('BUTTON');
+
+                    button.innerHTML = '\u25BC '+ btnText;
+                    button.title = btnText;
+                    button.className = 'changeTypeVariables';
+
+                    return button;
+                },
+                addVersionsButtonMenuEvent = function (button, menu) {
+                    Handsontable.Dom.addEvent(button, 'click', function (event) {
+                        var changeTypeMenuVersions, position, removeMenu;
+                        
+                        lastVersionsButton = this;
+                        document.body.appendChild(menu);
+
+                        event.preventDefault();
+                        event.stopImmediatePropagation();
+
+                        changeTypeMenuVersions = document.querySelectorAll('.changeTypeMenuVersions');
+
+                        for (var i = 0, len = changeTypeMenuVersions.length; i < len; i++) {
+                            changeTypeMenuVersions[i].style.display = 'none';
+                        }
+                        menu.style.display = 'block';
+                        position = button.getBoundingClientRect();
+
+                        menu.style.top = (position.top + (window.scrollY || window.pageYOffset)) + 2 + 'px';
+                        menu.style.left = (position.left) + 'px';
+
+                        removeMenu = function (event) {
+                            if (event.target.nodeName == 'LI' && event.target.parentNode.className.indexOf('changeTypeMenuVersions') !== -1 || event.target.parentNode.className.indexOf('changeTypeMenuVersions') == -1) {
+                                if (menu.parentNode) {
+                                    menu.parentNode.removeChild(menu);
+                                }
+                            }
+                        };
+                      Handsontable.Dom.removeEvent(document, 'click', removeMenu);
+                      Handsontable.Dom.addEvent(document, 'click', removeMenu);
+                    });
+                },
+                addVariablesButtonMenuEvent = function (button, menu) {
+                    Handsontable.Dom.addEvent(button, 'click', function (event) {
+                        var changeTypeMenuVariables, position, removeMenu;
+                        
+                        lastVariablesButton = this;
+                        document.body.appendChild(menu);
+
+                        event.preventDefault();
+                        event.stopImmediatePropagation();
+
+                        changeTypeMenuVariables = document.querySelectorAll('.changeTypeMenuVariables');
+
+                        for (var i = 0, len = changeTypeMenuVariables.length; i < len; i++) {
+                            changeTypeMenuVariables[i].style.display = 'none';
+                        }
+                        menu.style.display = 'block';
+                        position = button.getBoundingClientRect();
+
+                        menu.style.top = (position.top + (window.scrollY || window.pageYOffset)) + 2 + 'px';
+                        menu.style.left = (position.left) + 'px';
+
+                        removeMenu = function (event) {
+                            if (event.target.nodeName == 'LI' && event.target.parentNode.className.indexOf('changeTypeMenuVariables') !== -1 || event.target.parentNode.className.indexOf('changeTypeMenuVariables') == -1) {
+                                if (menu.parentNode) {
+                                    menu.parentNode.removeChild(menu);
+                                }
+                            }
+                        };
+                      Handsontable.Dom.removeEvent(document, 'click', removeMenu);
+                      Handsontable.Dom.addEvent(document, 'click', removeMenu);
+                    });
+                };
+                debugger;
+                var gridData = dsData; //TODO: this is assigning level manually now
+                
+                var grid = Object.keys(gridData);
+                var columnHeaders = Object.keys(grid);
+
+                var columnDffn = columnHeaders.map(function(item, indx) {
+                    return {
+                        data: item + '.val'
+                    };
+                });
+
+            return new Handsontable(dsParentElement, {
+                    data: dsData,
+                    colHeaders: columnHeaders,
+                    columns: columnDffn,
+                    manualColumnMove: true,
+                    manualColumnResize: true,
+                    colWidths: 110,
+                    contextMenu: {
+                        callback: function(key, options) {
+
+                            if (key === 'insert_col_before') {
+                                var colIndex = this.getSelected()[1];
+                                setTimeout(function() {
+                                    // timeout is used to make sure the menu collapsed before alert is shown
+                                    insertColumn(colIndex);
+                                }, 0);
+                            }
+
+                            if (key === 'insert_col_after') {
+                                var colIndex = this.getSelected()[1] + 1;
+                                setTimeout(function() {
+                                    // timeout is used to make sure the menu collapsed before alert is shown
+                                    insertColumn(colIndex);
+                                }, 0);
+                            }
+
+                            if (key === 'delete_col') {
+                                var colIndex = this.getSelected()[1];
+                                setTimeout(function() {
+                                    // timeout is used to make sure the menu collapsed before alert is shown
+                                    deleteColumn(colIndex);
+                                }, 0);
+                            }
+
+                        },
+                        items: {
+                            "insert_col_before": {
+                                name: 'Insert Column Before'
+                            },
+                            "insert_col_after": {
+                                name: 'Insert Column After'
+                            },
+                            "hsep1": "---------",
+                            "delete_col": {
+                                name: 'Delete this Column. OK?'
+                            },
+                            "hsep2": "---------"
+                        }
+                    },
+                    currentRowClassName: 'currentRow',
+                    currentColClassName: 'currentCol',
+                    rowHeaders: "Weeks",
+                    afterCellMetaReset: function () {
+                        console.log("afterCellMetaReset");
+                    },
+                    cells: function(row, col, prop) {
+                        var cellProperties = {},
+                            colName = prop.slice(0, -4),
+                            colDataObj = this.instance.getData()[row][colName];
+
+                            if (colDataObj && colDataObj.type && colDataObj.val) {
+                                cellProperties.readOnly = true;
+                                cellProperties = getCustomCellProperties(cellProperties, colDataObj);
+                            }
+
+                            return cellProperties;
+                    },
+                    afterChange: function(changes, source) {
+                        if (source === 'edit' || source === "paste" || source === "autofill") {
+                            var self = this;
+                            changes.forEach(function(change) {
+                                /* newValue != oldValue */
+                                if (("" + change[2]) !== change[3]) {
+                                    /*var colName = change[1].slice(0, -4),
+                                        colIndex = Object.keys(self.getData()[0]).indexOf(colName),
+                                        updatedCell = { row: change[0], col: colIndex, colname: self.getData()[0][colName].name };
+                                    self.updatedCells = self.updatedCells || [];
+                                    self.updatedCells.push(updatedCell);*/
+
+                                    var colIndex = change[1].slice(0, -4),
+                                        rowIndex = change[0];
+                                    //set cell meta
+                                    self.setCellMeta(rowIndex, colIndex, "isDirty", true);
+                                }
+                            });
+                        }
+                    },
+                    afterGetColHeader: function(col, TH) {
+                        if (col < 0) {
+                            return;
+                        }
+
+                        var instance = this,
+                            gData = instance.getData(),
+
+                            verDescT = gData[0][col].versions.verDescT,
+                            verC = gData[0][col].versions.verC,
+
+                            upsVarDescT = gData[0][col].variables.upsVarDescT,
+                            upsVarI = gData[0][col].variables.upsVarI,
+
+                            menuVersions = buildMenuVersions(verC, verDescT),
+                            menuVariables = buildMenuVariables(upsVarI, upsVarDescT),
+
+                            buttonVersions = buildButtonVersions(verDescT);
+                            buttonVariables = buildButtonVariables(upsVarDescT),
+
+                            divCont = document.createElement("div");
+
+                        addVersionsButtonMenuEvent(buttonVersions, menuVersions);
+                        addVariablesButtonMenuEvent(buttonVariables, menuVariables);
+
+                        Handsontable.Dom.addEvent(menuVersions, 'click', function (event) {
+                            if (event.target.nodeName == 'LI') {
+                                
+                                var instance = $scope.getCurrentDataSheetInstance(),
+                                    gridData = instance.getData();
+ 
+                                lastVersionsButton.innerHTML = '\u25BC '+ event.target.innerText;
+                                lastVersionsButton.title = event.target.innerText;
+                                console.log("handle the menuVersions drop down here...");
+                                console.log(event.target.getAttribute("data-verc"));
+
+                                gridData.forEach(function(item, indx) {
+                                    item[col].val = "";
+                                    item[col].versions.verDescT = event.target.innerText; /* this sets the column version */
+                                });
+
+                                instance.render();
+                            }
+                        });
+
+                        Handsontable.Dom.addEvent(menuVariables, 'click', function (event) {
+                            if (event.target.nodeName == 'LI') {
+                                
+                                var instance = $scope.getCurrentDataSheetInstance(),
+                                    gridData = instance.getData();
+ 
+                                lastVariablesButton.innerHTML = '\u25BC '+ event.target.innerText;
+                                lastVariablesButton.title = event.target.innerText;
+                                console.log("handle the VariablesButton drop down here...");
+                                console.log(event.target.getAttribute("data-upsvari"));
+
+                                gridData.forEach(function(item, indx) {
+                                    item[col].val = "";
+                                    item[col].variables.upsVarDescT = event.target.innerText; /* this sets the column version */
+                                });
+
+                                instance.render();
+                            }
+                        });
+
+                        if (TH.firstChild.lastChild.nodeName === 'DIV') {
+                            TH.firstChild.removeChild(TH.firstChild.lastChild);
+                        }
+
+                        divCont.appendChild(buttonVersions);
+                        divCont.appendChild(document.createElement('br'));
+                        divCont.appendChild(buttonVariables);
+
+                        TH.firstChild.appendChild(divCont);
+                    }
+                });
+        },
+        createTab = function(level, tabs) {
+
+            var tabElements = [],
+                tabsParent = document.getElementsByClassName('nav-tabs-'+ level)[0],
+                tabcontentsParent = document.getElementsByClassName('tab-content-'+ level)[0],
+
+                bindTabEvents = function(tab, level){
+                    tab.addEventListener("click", function(event){
+                        event.preventDefault();
+                        event.stopImmediatePropagation();
+
+                        var tabs = document.querySelectorAll('.nav-tabs-'+ level +' li'),
+                            tabpanes = document.querySelectorAll('.tab-content-'+ level +' .tab-pane'),
+                            paneid = this.getAttribute('data-pane');
+
+                        /* de-activate all the tabs */
+                        for (var i = 0, len = tabs.length; i < len; i++) {
+                            tabs[i].classList.remove('active');
+                        }
+
+                        /* hide all the panes */
+                        for (var i = 0, len = tabpanes.length; i < len; i++) {
+                            tabpanes[i].style.display = 'none';
+                        }
+
+                        var tabContentPane = document.getElementById(paneid);
+                        tabContentPane.style.display = "block";
+                        this.classList.add('active');
+
+                        var dsResDataObj = DATASHEET_RESPONSE_DATA[level][this.getAttribute('data-tabid')];
+
+                        if(!dsResDataObj['instance']) {
+                            //create one
+                            dsResDataObj['instance'] = createADataSheetInstance(tabContentPane, dsResDataObj.data);
+                        }
+
+                    });
+                };
+
+            for(var i = 0; i < tabs.length; i++) {
+                var li = document.createElement('li'),
+                    a = document.createElement('a'),
+                    div = document.createElement('div');
+
+                a.innerText = tabs[i];
+                li.setAttribute('data-pane', level+'pane_'+i);
+                li.setAttribute('data-tabid', tabs[i]);
+                div.setAttribute('class', 'tab-pane');
+                div.setAttribute('id', level+'pane_'+i);
+                div.innerText = 'pane_'+i;
+
+                bindTabEvents(li, level);
+
+                li.appendChild(a);
+                tabsParent.appendChild(li);
+                tabcontentsParent.appendChild(div);
+
+                DATASHEET_RESPONSE_DATA[level][tabs[i]]['tab'] = li; 
+            }
+
+            return tabElements;
+        },
+        loadDataSheet = function () {
+            var nestedObjectsData = generateData();
+
+            createTab('dept', Object.keys(nestedObjectsData.dept));
+            createTab('class', Object.keys(nestedObjectsData.class));
+            createTab('subclass', Object.keys(nestedObjectsData.subclass));
+            createTab('style', Object.keys(nestedObjectsData.style));
+            createTab('item', Object.keys(nestedObjectsData.item));
+
+            //force to load atleast one tab
+            $('li[data-pane="deptpane_0"]').trigger('click');
+
+        },
+        initDataSheet = function () {
+            
+        };
+
+    function fetchVersions() {
+        var deferred = $q.defer(),
+            promise = UserDetails.getVersions();
+        
+        promise.then(function(data) {
+            if (data) {
+                VERSIONS = data;
+                console.log("versions: ", VERSIONS);
+                deferred.resolve();
+            }
+        }, function(reason) {
+            console.warn('Failed getting views: ' + reason);
+            deferred.reject(reason);
+        }, function(update) {
+            console.info('Got notification: ', update);
+        });
+
+        return deferred.promise;
+    };
+
+    function fetchVariables() {
+        var deferred = $q.defer(),
+            promise = UserDetails.getVariables();
+
+        promise.then(function(data) {
+            if (data) {
+                VARIABLES = data;
+                console.log("variables: ", VARIABLES);
+                deferred.resolve();
+            }
+        }, function(reason) {
+            console.warn('Failed getting views: ' + reason);
+            deferred.reject(reason);
+        }, function(update) {
+            console.info('Got notification: ', update);
+        });
+
+        return deferred.promise;
+    };
+
+    /* datasheet initialization function */
+    (function init() {
+        /* Below Ajax is done in a sequence */
+        /* fetch versions */
+        //fetchVersions().then(function(){
+            /* fetch variables */
+            //fetchVariables().then(function(){
+                /* loads views to the drop down*/
+                //loadViewsDropDown().then(function(){
+                    /* load inital datasheet */
+                    loadDataSheet();
+                //});
+            //});
+        //});
+        
+    }());
+
+}]);
